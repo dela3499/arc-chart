@@ -1,0 +1,3 @@
+This is a small tool to visualize the structure in strings by drawing arcs connecting repeated substrings. The project is inspired by Martin Wattenberg's [Shape of Song](http://www.bewitched.com/song.html) project.
+
+So far, I've just got a mockup, which you can see at the top-of-the-page link. It's got two panels. The large left panel contains the arc chart, and the right panel contains a text input, along with a few buttons to load sample strings into the text field.
