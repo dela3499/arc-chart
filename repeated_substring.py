@@ -6,6 +6,8 @@ class ArcChart(object):
         self.org = original_string
         self.substrings = self.get_repeated_substring() # identical pairs
         ArcChart.remove_overlapping_substrings(self.substrings) # non-overlaiing identical pairs
+        # list of consecutive, non-overlapping pairs
+        self.matching_pairs = ArcChart.get_consecutive_pairs(self.substrings)
 
     def get_json_format(self, file_name):
         list_of_pairs = []
@@ -18,6 +20,7 @@ class ArcChart(object):
                     list_of_pairs.append( pair )
         with open(file_name, 'w') as f:
             json.dump( list_of_pairs, f) 
+
     @staticmethod
     def _conver_format(file_name):
         content = ''
@@ -47,6 +50,20 @@ class ArcChart(object):
     def get_repeated_substring(self):
         s = self.org
     	return dict((k,v) for k,v in self.get_substrings().iteritems() if len(v) > 1)
+
+    @staticmethod
+    def get_consecutive_pairs(dic):
+        """ 
+            returns a list of consecutive pairs from the given dictionary dic.
+            dic should be pre-processed so that it does not contain any ocerlapping pairs
+        """
+        retlist = []        
+        for each_key in dic.keys():
+            sublist = sorted(dic[each_key])
+            if ( len(sublist) > 1 ):
+                for i in range(len(sublist)-1):
+                    retlist.append( (sublist[i], sublist[i+1]) )
+        return retlist
 
     @staticmethod
     def remove_overlapping_substrings(dic):
