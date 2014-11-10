@@ -4,10 +4,29 @@ class ArcChart(object):
 
     def __init__(self, original_string):
         self.org = original_string
-        self.substrings = self.get_repeated_substring() # identical pairs
-        ArcChart.remove_overlapping_substrings(self.substrings) # non-overlaiing identical pairs
+        self.substrings = self.get_repeated_substring() # identical substrings
+        ArcChart._remove_overlapping_substrings(self.substrings) # non-overlaiing identical substrings
         # list of consecutive, non-overlapping pairs
         self.matching_pairs = ArcChart.get_consecutive_pairs(self.substrings)
+        ArcChart._remove_nonmaximal_pairs(self.matching_pairs)        
+
+    class Pair(object):
+        def __init__(self, first_substring, second_substring):
+            self.value = (first_substring, second_substring)
+        def contains(self, pair):
+            """ returns true if the calling object contains the argument object """
+            def _1contains2(substring1, substring2):
+                x_start = substring1[0]
+                x_end = substring1[1]
+                y_start = substring2[0]
+                y_end = substring2[1]
+                return x_start <= y_start and x_end >= y_end
+            pair1 = self.value
+            pair2 = pair.value
+            for i in xrange(2):
+                if not ( _1contains2( pair1[i], pair2[i] ) ):
+                    return False
+            return True
 
     def get_json_format(self, file_name):
         list_of_pairs = []
@@ -62,11 +81,11 @@ class ArcChart(object):
             sublist = sorted(dic[each_key])
             if ( len(sublist) > 1 ):
                 for i in range(len(sublist)-1):
-                    retlist.append( (sublist[i], sublist[i+1]) )
+                    retlist.append( ArcChart.Pair(sublist[i], sublist[i+1]) )
         return retlist
 
     @staticmethod
-    def remove_overlapping_substrings(dic):
+    def _remove_overlapping_substrings(dic):
         for each_key in dic.keys():
             dic[each_key].sort()
             sublist = dic[each_key]
@@ -99,3 +118,13 @@ class ArcChart(object):
             return True
         else:
             return False
+
+    @staticmethod
+    def _remove_nonmaximal_pairs(pairs):
+        for pair1 in pairs[:]: 
+            removable_pairs = []
+            for pair2 in pairs:
+                if ( pair1 is not pair2 ):
+                    if ( pair1.contains(pair2) ):
+                        pairs.remove(pair2)
+ 
