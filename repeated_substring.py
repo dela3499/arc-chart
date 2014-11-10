@@ -3,11 +3,15 @@ import json
 class ArcChart(object):
 
     def __init__(self, original_string):
+        # original string
         self.org = original_string
-        self.substrings = self.get_repeated_substring() # identical substrings
-        ArcChart._remove_overlapping_substrings(self.substrings) # non-overlaiing identical substrings
+        # identical substrings
+        self.substrings = self.get_repeated_substring() 
+        # non-overlaiing identical substrings
+        ArcChart._remove_overlapping_substrings(self.substrings)
         # list of consecutive, non-overlapping pairs
         self.matching_pairs = ArcChart.get_consecutive_pairs(self.substrings)
+        # list of maximal, consecutive, non-overlapping pairs
         ArcChart._remove_nonmaximal_pairs(self.matching_pairs)        
 
     class Pair(object):
