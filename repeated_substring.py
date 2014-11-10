@@ -28,17 +28,30 @@ class ArcChart(object):
                     return False
             return True
 
-    def get_json_format(self, file_name):
+    def export_json_format_pairs(self, file_name, pairs=None):
+        if not pairs:
+            pairs = self.matching_pairs
         list_of_pairs = []
-        for each_key in self.substrings.keys():
-            sublist = self.substrings[each_key]
-            for i in range(len(sublist)-1):
-                for j in range(i+1, len(sublist)):
-                    pair = {'a': sublist[i][0], 'b': sublist[j][0],\
-                            'n': sublist[i][1] - sublist[i][0]}
-                    list_of_pairs.append( pair )
+        for each_pair in pairs:
+            start1 = each_pair.value[0][0]
+            start2 = each_pair.value[1][0]
+            length = each_pair.value[0][1] - start1 
+            pair = {'a': start1, 'b': start2,\
+                    'n': length}
+            list_of_pairs.append( pair )
         with open(file_name, 'w') as f:
             json.dump( list_of_pairs, f) 
+
+    def get_matching_pairs_in_strings(self):
+        retlist = []
+        for each_pair in self.matching_pairs:
+            str1_start = each_pair.value[0][0]
+            str1_end = each_pair.value[0][1]
+            str2_start = each_pair.value[1][0]
+            str2_end = each_pair.value[1][1]
+            retlist.append( ( self.org[str1_start:str1_end], self.org[str2_start:str2_end]))
+        return retlist
+
 
     @staticmethod
     def _conver_format(file_name):
