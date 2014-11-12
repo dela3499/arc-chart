@@ -3,23 +3,59 @@ import json
 class ArcChart(object):
 
     def __init__(self, original_string):
+        # original string
         self.org = original_string
-        self.substrings = self.get_repeated_substring() # identical pairs
-        ArcChart.remove_overlapping_substrings(self.substrings) # non-overlaiing identical pairs
+        # identical substrings
+        self.substrings = self.get_repeated_substring() 
+        # non-overlaiing identical substrings
+        ArcChart._remove_overlapping_substrings(self.substrings)
         # list of consecutive, non-overlapping pairs
         self.matching_pairs = ArcChart.get_consecutive_pairs(self.substrings)
+        # list of maximal, consecutive, non-overlapping pairs
+        ArcChart._remove_nonmaximal_pairs(self.matching_pairs)        
 
-    def get_json_format(self, file_name):
+    class Pair(object):
+        def __init__(self, first_substring, second_substring):
+            self.value = (first_substring, second_substring)
+        def contains(self, pair):
+            """ returns true if the calling object contains the argument object """
+            def _1contains2(substring1, substring2):
+                x_start = substring1[0]
+                x_end = substring1[1]
+                y_start = substring2[0]
+                y_end = substring2[1]
+                return x_start <= y_start and x_end >= y_end
+            pair1 = self.value
+            pair2 = pair.value
+            for i in xrange(2):
+                if not ( _1contains2( pair1[i], pair2[i] ) ):
+                    return False
+            return True
+
+    def export_json_format_pairs(self, file_name, pairs=None):
+        if not pairs:
+            pairs = self.matching_pairs
         list_of_pairs = []
-        for each_key in self.substrings.keys():
-            sublist = self.substrings[each_key]
-            for i in range(len(sublist)-1):
-                for j in range(i+1, len(sublist)):
-                    pair = {'a': sublist[i][0], 'b': sublist[j][0],\
-                            'n': sublist[i][1] - sublist[i][0]}
-                    list_of_pairs.append( pair )
+        for each_pair in pairs:
+            start1 = each_pair.value[0][0]
+            start2 = each_pair.value[1][0]
+            length = each_pair.value[0][1] - start1 
+            pair = {'a': start1, 'b': start2,\
+                    'n': length}
+            list_of_pairs.append( pair )
         with open(file_name, 'w') as f:
             json.dump( list_of_pairs, f) 
+
+    def get_matching_pairs_in_strings(self):
+        retlist = []
+        for each_pair in self.matching_pairs:
+            str1_start = each_pair.value[0][0]
+            str1_end = each_pair.value[0][1]
+            str2_start = each_pair.value[1][0]
+            str2_end = each_pair.value[1][1]
+            retlist.append( ( self.org[str1_start:str1_end], self.org[str2_start:str2_end]))
+        return retlist
+
 
     @staticmethod
     def _conver_format(file_name):
@@ -62,11 +98,11 @@ class ArcChart(object):
             sublist = sorted(dic[each_key])
             if ( len(sublist) > 1 ):
                 for i in range(len(sublist)-1):
-                    retlist.append( (sublist[i], sublist[i+1]) )
+                    retlist.append( ArcChart.Pair(sublist[i], sublist[i+1]) )
         return retlist
 
     @staticmethod
-    def remove_overlapping_substrings(dic):
+    def _remove_overlapping_substrings(dic):
         for each_key in dic.keys():
             dic[each_key].sort()
             sublist = dic[each_key]
@@ -99,3 +135,13 @@ class ArcChart(object):
             return True
         else:
             return False
+
+    @staticmethod
+    def _remove_nonmaximal_pairs(pairs):
+        for pair1 in pairs[:]: 
+            removable_pairs = []
+            for pair2 in pairs:
+                if ( pair1 is not pair2 ):
+                    if ( pair1.contains(pair2) ):
+                        pairs.remove(pair2)
+ 
