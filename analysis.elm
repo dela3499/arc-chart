@@ -2,7 +2,9 @@ import String
 import Dict
 
 string = "ababab"
---main = asText (collectRepeatedSubstrings string)
+--main = asText (string |> collectRepeatedSubstrings |> )
+
+type Pair = ((Int,Int),(Int,Int))
 
 -- Get the value associated with a key
 get: comparable -> Dict.Dict comparable v -> v
@@ -56,3 +58,11 @@ removeOverlaps list =
         let shouldAdd = ((length newList) == 0) || not (isOverlapping (last newList) range)
         in if shouldAdd then newList ++ [range] else newList
   in foldl f [] sortedList
+
+removeOverlappingSubstrings: Dict.Dict String [(Int,Int)] -> Dict.Dict String [(Int,Int)]
+removeOverlappingSubstrings x = Dict.map removeOverlaps x
+
+collectConsecutivePairs: Dict.Dict String [(Int,Int)] -> [(String,Pair)]
+
+test = Dict.fromList [("ar",[(1,3),(2,5)]),("as",[(1,3),(4,5)])]
+main = asText (removeOverlappingSubstrings test)
