@@ -62,7 +62,21 @@ removeOverlaps list =
 removeOverlappingSubstrings: Dict.Dict String [(Int,Int)] -> Dict.Dict String [(Int,Int)]
 removeOverlappingSubstrings x = Dict.map removeOverlaps x
 
-collectConsecutivePairs: Dict.Dict String [(Int,Int)] -> [(String,Pair)]
+-- Pair up consecutive elements in a list
+pair: [a] -> [(a,a)]
+pair list = 
+  let list1 = take ((length list) - 1) list
+      list2 = tail list
+  in zip list1 list2
 
-test = Dict.fromList [("ar",[(1,3),(2,5)]),("as",[(1,3),(4,5)])]
-main = asText (removeOverlappingSubstrings test)
+collectConsecutivePairs: Dict.Dict String [(Int,Int)] -> [(String,Pair)]
+collectConsecutivePairs x = 
+  let f key indexList list = 
+    let substrings = map (\p -> (key,p)) (pair indexList)
+    in substrings ++ list
+  in Dict.foldl f [] x
+
+
+
+test = removeOverlappingSubstrings (Dict.fromList [("ar",[(1,3),(3,5),(5,7)]),("as",[(1,3),(4,5)])])
+main = asText (collectConsecutivePairs test)
