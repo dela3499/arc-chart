@@ -1,9 +1,27 @@
 import String
 import Dict
 
-string = "ababab"
---main = asText (string |> collectRepeatedSubstrings |> )
+x = 1000
+s = "aabcaabc"
 
+arcs: [Arc]
+arcs = getArcs s
+
+config: Config
+config = {w=x,h=x}
+
+main: Element
+main = display config (scaleArcs arcs (toFloat config.w))
+
+getArcs s = 
+  let nonOverlappingSubstrings = 
+        s |> collectRepeatedSubstrings |> removeOverlappingSubstrings  
+      maximalPairs = 
+        nonOverlappingSubstrings |> collectConsecutivePairs |> 
+        collectMaximalPairs |> takePairs 
+      repetitionRegions = getRepetitionRegions nonOverlappingSubstrings
+      essentialPairs = maximalPairs
+  in map pairToArc essentialPairs
 type Pair = ((Int,Int),(Int,Int))
 
 -- Get the value associated with a key
@@ -64,6 +82,45 @@ removeOverlaps list =
 
 removeOverlappingSubstrings: Dict.Dict String [(Int,Int)] -> Dict.Dict String [(Int,Int)]
 removeOverlappingSubstrings x = Dict.map removeOverlaps x
+
+-- Append a value to the last element in a list of lists
+appendToLast: a -> [[a]] -> [[a]]
+appendToLast x list = (take ((length list) - 1) list) ++ [(last list) ++ [x]]
+
+-- Append a value to a list
+append: a -> [a] -> [a]
+append x list = list ++ [x]
+
+-- Return true if substrings are adjacent
+substringsAdjacent: (Int,Int) -> (Int,Int) -> Bool
+substringsAdjacent a b = ((snd a) == (fst b)) || ((fst a) == (snd b))
+
+-- Take a list of non-overlapping repeated substrings, and find the repetition regions in it (adjacent repeated substrings)
+
+[(0,1),(1,2),(3,4)] -> [(0,4)]
+
+groupAdjacentSubstrings: [(Int,Int)] -> [[(Int,Int)]]
+groupAdjacentSubstrings x = 
+  let f x list = 
+    let newGroup = (list == []) || not (substringsAdjacent x (last (last list)))
+    in if newGroup then append [x] list else appendToLast x list
+  in foldl f [] x
+
+-- Given a group of ordered, adjacent substrings, return the lowest and highest indices as a tuple
+findGroupBounds: [[(Int,Int)]] -> [(Int,Int)]
+findGroupBounds x = 
+  let f group = (fst (head group), snd (last group))
+  in map f x
+
+findRepetitionRegions: [(Int,Int)] -> [(Int,Int)]
+findRepetitionRegions x = 
+  let regionGroups = groupAdjacentSubstrings x |> filter (\a -> (length a) > 1)
+  in findGroupBounds regionGroups
+
+
+getRepetitionRegions: Dict.Dict String [(Int,Int)] -> [(String,(Int,Int))]
+getRepetitionRegions x = Dict.map 
+
 
 -- Pair up consecutive elements in a list
 pair: [a] -> [(a,a)]
@@ -134,20 +191,48 @@ takePairs x = map snd x
 
 pairToArc: Pair -> Arc
 pairToArc pair = 
-  let x1 = fst (fst pair)
-      x2 = snd (fst pair)
-      y1 = fst (snd pair)
-      y2 = snd (snd pair)
+  let x1 = fst (fst pair) |> toFloat
+      x2 = snd (fst pair) |> toFloat
+      y1 = fst (snd pair) |> toFloat
+      y2 = snd (snd pair) |> toFloat
   in {a = x1, b = y1, n = (x2 - x1)}
 
-s = "aabcaabc"
+--
 
-test = 
-  s |> 
-  collectRepeatedSubstrings |> 
-  removeOverlappingSubstrings |> 
-  collectConsecutivePairs |> 
-  collectMaximalPairs |>
-  takePairs
+type Arc = {a: Float, b: Float, n: Float}
+type Config = {w: Int, h: Int}
+
+display: Config -> [Arc] -> Element
+display c arcs = 
+  let arcforms = map (arc2form c) arcs
+  in collage c.w c.h arcforms
+ 
+arc2form: Config -> Arc-> Form
+arc2form q arc = 
+  let line = {width=arc.n, color=(rgba 78 154 255 0.5), cap=Flat, join=Smooth, dashing=[], dashOffset=0}
+      r = (arc.b - arc.a) / 2
+      cx = arc.a + (arc.n/2) + r
+      cy = 0
+      offset = (-(toFloat q.w)/2, -(toFloat q.h)/2)
+  in traced line (path (arcPoints (cx, cy) r)) |> move offset
+
+arcPoints: (number,number) -> number -> [(Float, Float)]
+arcPoints center r = 
+  let theta = linspace pi 0 1000
+      x t = (fst center) + r * cos t
+      y t = (snd center) + r * sin t
+      f t = (x t, y t)
+  in map f theta
+        
+linspace: number -> number -> Int -> [number]
+linspace start end n = 
+  let dt = (end - start) / ((toFloat n) - 1)
+      f i = start + (i * dt)
+  in map f [0..(toFloat n)-1]
   
-main = asText test
+  
+scaleArcs: [Arc] -> Float -> [Arc]
+scaleArcs arcs width = 
+  let s = width / (maximum (map (\a -> a.b + a.n) arcs)) -- scalefactor
+  in map (\x -> {a=x.a*s, b=x.b*s, n=x.n*s}) arcs
+
