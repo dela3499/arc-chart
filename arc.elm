@@ -1,8 +1,8 @@
 import String
 import Dict
 
-x = 1000
-s = "aabcaabc"
+x = 300
+s = "10101"
 
 arcs: [Arc]
 arcs = getArcs s
@@ -10,8 +10,16 @@ arcs = getArcs s
 config: Config
 config = {w=x,h=x}
 
-main: Element
-main = display config (scaleArcs arcs (toFloat config.w))
+--main: Element
+--main = display config (scaleArcs arcs (toFloat config.w))
+
+main = testRepetitionRegions
+
+testRepetitionRegions = 
+  let nonOverlappingSubstrings = 
+        s |> collectRepeatedSubstrings |> removeOverlappingSubstrings  
+      repetitionRegions = getRepetitionRegions nonOverlappingSubstrings
+  in asText repetitionRegions
 
 getArcs s = 
   let nonOverlappingSubstrings = 
@@ -22,6 +30,7 @@ getArcs s =
       repetitionRegions = getRepetitionRegions nonOverlappingSubstrings
       essentialPairs = maximalPairs
   in map pairToArc essentialPairs
+
 type Pair = ((Int,Int),(Int,Int))
 
 -- Get the value associated with a key
@@ -95,10 +104,6 @@ append x list = list ++ [x]
 substringsAdjacent: (Int,Int) -> (Int,Int) -> Bool
 substringsAdjacent a b = ((snd a) == (fst b)) || ((fst a) == (snd b))
 
--- Take a list of non-overlapping repeated substrings, and find the repetition regions in it (adjacent repeated substrings)
-
-[(0,1),(1,2),(3,4)] -> [(0,4)]
-
 groupAdjacentSubstrings: [(Int,Int)] -> [[(Int,Int)]]
 groupAdjacentSubstrings x = 
   let f x list = 
@@ -117,10 +122,15 @@ findRepetitionRegions x =
   let regionGroups = groupAdjacentSubstrings x |> filter (\a -> (length a) > 1)
   in findGroupBounds regionGroups
 
-
+-- Take a list of non-overlapping repeated substrings, and find the repetition regions in it (adjacent repeated substrings)
 getRepetitionRegions: Dict.Dict String [(Int,Int)] -> [(String,(Int,Int))]
-getRepetitionRegions x = Dict.map 
-
+getRepetitionRegions x = 
+  let regionsDictList = Dict.map findRepetitionRegions x |> Dict.toList
+      f kvPair = 
+        let key = fst kvPair
+            vals = snd kvPair
+        in map (\val -> (key,val)) vals
+  in concatMap f regionsDictList
 
 -- Pair up consecutive elements in a list
 pair: [a] -> [(a,a)]
@@ -207,7 +217,7 @@ display c arcs =
   let arcforms = map (arc2form c) arcs
   in collage c.w c.h arcforms
  
-arc2form: Config -> Arc-> Form
+arc2form: Config -> Arc -> Form
 arc2form q arc = 
   let line = {width=arc.n, color=(rgba 78 154 255 0.5), cap=Flat, join=Smooth, dashing=[], dashOffset=0}
       r = (arc.b - arc.a) / 2
